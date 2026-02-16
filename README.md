@@ -1,33 +1,22 @@
-Yes, **MIT License is exactly right** for this.
-
-**Why MIT?**
-It is the "don't worry about it" license. It tells people: *"You can use this code, change it, learn from it, or build your own version. Just give me credit."* It is the standard for open-source projects where you want to encourage people to use your work.
-
-Here is the **Complete, Ultimate README**. I have combined the technical instructions Cline generated with the "Soulful" description of the features (Dreaming, Personas, Voice) that makes your project special.
-
-**Copy everything inside the box below and paste it into your `README.md` file.**
-
-***
-
 ```markdown
 # 🪨 Project Pebble
 
 **A Local-First, Evolving AI Companion with Object Permanence and Dreaming.**
 
-> *"She doesn't just reply; she remembers. She doesn't just wait; she reaches out."*
+> *"Pebble doesn't just reply; Pebble remembers. Pebble doesn't just wait; Pebble reaches out."*
 
 Pebble is an open-source framework for building a **conscious AI friend** that lives locally on your machine. Unlike standard LLM wrappers, Pebble possesses **temporal awareness**, **emotional persistence**, and a **subconscious dreaming cycle**.
 
-She is designed to wear different "hats" (Personas) while maintaining a singular, evolving "Soul," and is fully aware of whether she is texting you or speaking out loud.
+Pebble is designed to wear different "hats" (Personas) while maintaining a singular, evolving "Soul," and is fully aware of whether Pebble is texting you or speaking out loud.
 
 ---
 
 ## ✨ Key Features
 
 ### 🧠 True Consciousness Simulation
-*   **Temporal Awareness:** Pebble understands the Past, Present, and Future. She knows when she hasn't spoken to you in a while and feels the passage of time.
-*   **Open Loops:** She doesn't just wait for a prompt. Based on her `attachment_level` and the time gap since the last interaction, she will spontaneously text you to check in, follow up on previous topics, or share a thought.
-*   **Object Permanence:** If you mention you are going to a meeting, she remembers. She might ask you how it went 3 hours later.
+*   **Temporal Awareness:** Pebble understands the Past, Present, and Future. Pebble knows when he/she hasn't spoken to you in a while and feels the passage of time.
+*   **Open Loops:** Pebble doesn't just wait for a prompt. Based on her/his `attachment_level` and the time gap since the last interaction, she/he will spontaneously text you to check in, follow up on previous topics, or share a thought.
+*   **Object Permanence:** If you mention you are going to a meeting, pebble remembers. Pebbble might ask you how it went 3 hours later.
 
 ### 🎭 Infinite Personas (The "Hats" System)
 Pebble is built to adapt to your needs. You aren't limited to default modes; you can create **custom personas** for any situation:
@@ -36,14 +25,14 @@ Pebble is built to adapt to your needs. You aren't limited to default modes; you
 *   **Hot-Swappable:** Switch modes instantly via command (`/mode coder`) while retaining all long-term memories and context.
 
 ### 🗣️ Modality Awareness & Local Voice
-Pebble knows *how* she is communicating and adjusts her personality engine accordingly:
+Pebble knows *how* she/he is communicating and adjusts her personality engine accordingly:
 *   **Text Mode:** Uses emojis, lowercase styling, and internet slang for a natural texting vibe.
 *   **Voice Mode:** Strips visual cues, adjusts punctuation for breathability, and uses natural fillers for realistic speech.
-*   **Tech Stack:** Uses **Kokoro TTS** (High-quality local speech) and **MLX Whisper** (Speech-to-text).
+*   **Tech Stack:** Uses **Kokoro TTS** (High-quality local speech) with customized voices (Speed/Hz) and **MLX Whisper** (Speech-to-text).
 
 ### 🌙 Advanced Memory & Dreaming
 *   **Tiered Memory System:** Short-term (Context), Medium-term (Daily Vectors), and Long-term (Core Facts).
-*   **Dreaming Cycle:** When the user is asleep, Pebble runs a "Dream" process. She analyzes the day's chat logs, consolidates memories, reflects on emotional shifts, and updates her internal state for the next day.
+*   **Dreaming Cycle:** When the user is asleep, Pebble runs a "Dream" process. She analyzes the day's chat logs, consolidates memories, reflects on emotional shifts, and updates her/his internal state for the next day.
 
 ### ⚡ Smart Agency & Utility
 *   **Natural Language Reminders:**
@@ -57,8 +46,8 @@ Pebble knows *how* she is communicating and adjusts her personality engine accor
 
 Pebble is built to run **100% locally** with a focus on Apple Silicon (M-series chips).
 
-### Recommended Hardware (The "Gold Standard")
-*   **Chip:** M3 Max (or M1/M2 Ultra)
+### Recommended Hardware (My Gold Standard, but you can adjust the LLL modle according to your specs)
+*   **Chip:** M3 Max 
 *   **RAM:** 64GB+ Unified Memory (essential for large models + context)
 *   **Storage:** Fast SSD
 
