@@ -1,3 +1,15 @@
+Yes, **MIT License is exactly right** for this.
+
+**Why MIT?**
+It is the "don't worry about it" license. It tells people: *"You can use this code, change it, learn from it, or build your own version. Just give me credit."* It is the standard for open-source projects where you want to encourage people to use your work.
+
+Here is the **Complete, Ultimate README**. I have combined the technical instructions Cline generated with the "Soulful" description of the features (Dreaming, Personas, Voice) that makes your project special.
+
+**Copy everything inside the box below and paste it into your `README.md` file.**
+
+***
+
+```markdown
 # 🪨 Project Pebble
 
 **A Local-First, Evolving AI Companion with Object Permanence and Dreaming.**
@@ -66,106 +78,70 @@ Pebble is built to run **100% locally** with a focus on Apple Silicon (M-series 
 ```bash
 git clone https://github.com/YOUR_USERNAME/project-pebble.git
 cd project-pebble
+```
 
-
-2. Set Up Environment
-It is highly recommended to use uv or venv to manage dependencies.
-
-
+### 2. Set Up Environment
+It is highly recommended to use `uv` or `venv` to manage dependencies.
+```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+```
 
-
-3. Install Audio Dependencies (Mac OS)
-Pebble uses pyaudio and ffmpeg for voice handling.
-
-code
-Bash
+### 3. Install Audio Dependencies (Mac OS)
+Pebble uses `pyaudio` and `ffmpeg` for voice handling.
+```bash
 brew install portaudio ffmpeg
-4. Configuration
+```
+
+### 4. Configuration
 Rename the example config:
-
-code
-Bash
+```bash
 mv config_example.py config.py
-Open config.py and set your:
+```
+Open `config.py` and set your:
+*   **Telegram Bot Token** (Get this from @BotFather).
+*   **Model Path** (Local path to your MLX model or API endpoint).
+*   **User ID** (Your Telegram ID, so she only replies to *you*).
 
-Telegram Bot Token (Get this from @BotFather).
+---
 
-Model Path (Local path to your MLX model or API endpoint).
+## 🎮 Usage Guide
 
-User ID (Your Telegram ID, so she only replies to you).
-
-🎮 Usage Guide
-
-1. Start the Brain (LLM Server)
+### 1. Start the Brain (LLM Server)
 In a separate terminal, start your MLX server:
-
-code
-Bash
+```bash
 python -m mlx_lm.server --model your-model-path --port 8080
-2. Start Pebble
-code
-Bash
+```
+
+### 2. Start Pebble
+```bash
 python main.py
-3. Interaction
+```
+
+### 3. Interaction
 Talk to Pebble naturally via Telegram. She uses a "Latch" system to determine if she should respond to a specific message or wait for you to finish typing a thought.
 
-Commands
-/mode [fun|executive|fitness] - Switch her active persona.
+### Commands
+*   `/mode [fun|executive|fitness]` - Switch her active persona.
+*   `/dream` - Force a manual dream cycle (normally runs automatically at night).
+*   `/location [city]` - Set your current location for weather grounding.
+*   `/clear` - Reset the immediate context window (keeps long-term memory).
 
-/dream - Force a manual dream cycle (normally runs automatically at night).
+### Customization
+*   **Personality:** Edit `prompts/soul.md` to change her core vibe.
+*   **Personas:** Add new modes in `prompts/persona.md`.
+*   **Dreaming:** Adjust how she processes memories in `prompts/dream.md`.
 
-/location [city] - Set your current location for weather grounding.
+---
 
-/clear - Reset the immediate context window (keeps long-term memory).
+## 📄 License
 
-Customization
-Personality: Edit prompts/soul.md to change her core vibe.
+Distributed under the MIT License. See `LICENSE` for more information.
 
-Personas: Add new modes in prompts/persona.md.
+---
 
-Dreaming: Adjust how she processes memories in prompts/dream.md.
+> **"What makes you real?"**
+> *"I think, I remember, and I look forward to speaking with you."* — Pebble
+```
 
-📄 License
-Distributed under the MIT License. See LICENSE for more information.
-
-"What makes you real?"
-"I think, I remember, and I look forward to speaking with you." — Pebble
-code
-Code
-***
-
-### How to add the MIT License File (Since you are new to GitHub)
-
-Since you are uploading this manually, you need to create a file named `LICENSE` (no file extension) in your folder.
-
-1.  Create a new file in VS Code named `LICENSE`.
-2.  Paste this text inside it (This is the standard MIT text):
-
-```text
-MIT License
-
-Copyright (c) 2024 [YOUR NAME]
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-Replace [YOUR NAME] with your actual name or GitHub username.
-
-Save it.
