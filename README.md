@@ -1,4 +1,4 @@
-```markdown
+
 # 🪨 Project Pebble
 
 **A Local-First, Evolving AI Companion with Object Permanence and Dreaming.**
@@ -39,6 +39,10 @@ Pebble knows *how* she/he is communicating and adjusts her personality engine ac
     *   *"Remind me to workout at 5pm"* (One-off)
     *   *"I want to go to bed at 8pm, remind me every night"* (Recurring/Cron)
 *   **Weather Grounding:** "Senses" the local environment (via `wttr.in`) to ground conversations in reality (e.g., commenting on the rain).
+<img width="454" height="580" alt="image" src="https://github.com/user-attachments/assets/2e83fd93-428d-40ff-8a6c-3c63f3f78ea4" />
+<img width="454" height="580" alt="image" src="https://github.com/user-attachments/assets/2e83fd93-428d-40ff-8a6c-3c63f3f78ea4" />
+
+
 
 ---
 
