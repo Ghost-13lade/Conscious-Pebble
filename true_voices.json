@@ -1,0 +1,62 @@
+[
+  {
+    "name": "Brook",
+    "voice": "af_heart",
+    "speed": 0.93,
+    "pitch_shift": 1900.0
+  },
+  {
+    "name": "Bella",
+    "voice": "af_bella",
+    "speed": 1.26,
+    "pitch_shift": -2250.0
+  },
+  {
+    "name": "Nicole",
+    "voice": "af_nicole",
+    "speed": 1.22,
+    "pitch_shift": 3400.0
+  },
+  {
+    "name": "Sarah",
+    "voice": "af_sarah",
+    "speed": 1.07,
+    "pitch_shift": 1150.0
+  },
+  {
+    "name": "Emily",
+    "voice": "af_sky",
+    "speed": 1.15,
+    "pitch_shift": 2500.0
+  },
+  {
+    "name": "Michael",
+    "voice": "am_michael",
+    "speed": 1.21,
+    "pitch_shift": 350.0
+  },
+  {
+    "name": "Adam",
+    "voice": "am_adam",
+    "speed": 1.0,
+    "pitch_shift": 400.0
+  },
+  {
+    "name": "Eric",
+    "voice": "am_eric",
+    "speed": 0.94,
+    "pitch_shift": 500.0
+  },
+  {
+    "name": "Liam",
+    "voice": "am_liam",
+    "speed": 1.0,
+    "pitch_shift": 0.0
+  },
+  {
+    "name": "Onyx",
+    "voice": "am_onyx",
+    "speed": 1.2,
+    "pitch_shift": 0.0
+  }
+]
