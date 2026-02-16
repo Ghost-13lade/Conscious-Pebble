@@ -124,6 +124,10 @@ Talk to Pebble naturally via Telegram. She uses a "Latch" system to determine if
 
 ---
 
+## 📄 Future Update
+-Give Pebble eyes to so you can text her an image
+-Pebble local hardware so you can take pebble on the go (completely off-line)
+
 ## 📄 License
 
 Distributed under the MIT License. See `LICENSE` for more information.
