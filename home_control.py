@@ -41,7 +41,7 @@ def _load_voice_names() -> List[str]:
 
 
 VOICE_NAMES = _load_voice_names()
-TELEGRAM_USER_ID = "6359549942"  # Default Telegram user
+TELEGRAM_USER_ID = "1111111111"  # Default Telegram user
 
 
 def _get_telegram_settings() -> Tuple[str, str]:
