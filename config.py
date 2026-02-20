@@ -18,3 +18,13 @@ SENSES_SPEAK_PATH = os.getenv("SENSES_SPEAK_PATH", "/speak")
 # Model ids passed to the senses service
 WHISPER_MODEL = os.getenv("WHISPER_MODEL", "mlx-community/whisper-large-v3-turbo")
 KOKORO_MODEL = os.getenv("KOKORO_MODEL", "mlx-community/Kokoro-82M-bf16")
+
+# MLX LM Model path for local inference (Apple Silicon)
+# Can be a HuggingFace model ID or local path
+MLX_MODEL_PATH = os.getenv(
+    "MLX_MODEL_PATH", 
+    "mlx-community/Llama-3.2-3B-Instruct-4bit"
+)
+
+# KV Cache quantization for memory efficiency (4-bit recommended for 64GB RAM)
+MLX_KV_BITS = os.getenv("MLX_KV_BITS", "4")

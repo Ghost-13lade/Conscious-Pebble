@@ -1,14 +1,25 @@
 #!/bin/bash
-echo "🧠 Waking up Brook (Hermes 70B - 128k Context - 4-bit Memory)..."
+echo "🧠 Waking up Conscious Pebble Brain (MLX LM Server)..."
 
-# 1. Force 4-bit KV Cache Quantization (Crucial for 64GB RAM)
-# This allows us to run 128k context without crashing.
-export MLX_KV_BITS=4
+# Configuration via environment variables (with defaults)
+# Set these in your environment or .env file:
+#   MLX_MODEL_PATH - HuggingFace model ID or local path
+#   MLX_KV_BITS - KV cache quantization (4 for memory efficiency)
+#   MLX_PORT - Server port (default 8080)
 
-# 2. Start Server
-# NOTE: This installed mlx_lm build does not expose --max-kv-size on CLI.
-# It will use the model/server defaults while keeping 4-bit KV cache enabled.
+MODEL_PATH="${MLX_MODEL_PATH:-mlx-community/Llama-3.2-3B-Instruct-4bit}"
+KV_BITS="${MLX_KV_BITS:-4}"
+PORT="${MLX_PORT:-8080}"
+
+echo "   Model: $MODEL_PATH"
+echo "   KV Bits: $KV_BITS"
+echo "   Port: $PORT"
+
+# Set KV cache quantization for memory efficiency
+export MLX_KV_BITS=$KV_BITS
+
+# Start the MLX LM server
 python -m mlx_lm server \
-  --model /Users/ys/pebble/models/LLMs/mlx-community/Hermes-4-70B-MLX-4bit \
-  --port 8080 \
+  --model "$MODEL_PATH" \
+  --port "$PORT" \
   --log-level INFO

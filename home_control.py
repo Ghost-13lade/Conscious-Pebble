@@ -12,7 +12,14 @@ import librosa
 import numpy as np
 
 from brain import Brain
-from config import OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL, TELEGRAM_BOT_TOKEN
+from config import (
+    MLX_KV_BITS,
+    MLX_MODEL_PATH,
+    OPENAI_API_KEY,
+    OPENAI_BASE_URL,
+    OPENAI_MODEL,
+    TELEGRAM_BOT_TOKEN,
+)
 from db import (
     get_active_mode,
     get_persona_by_mode,
@@ -115,13 +122,13 @@ SERVICES: Dict[str, Dict[str, Path | list[str] | dict[str, str]]] = {
             "mlx_lm",
             "server",
             "--model",
-            "/Users/ys/pebble/models/LLMs/mlx-community/Hermes-4-70B-MLX-4bit",
+            MLX_MODEL_PATH,
             "--port",
             "8080",
             "--log-level",
             "INFO",
         ],
-        "env": {"MLX_KV_BITS": "4"},
+        "env": {"MLX_KV_BITS": MLX_KV_BITS},
     },
     "senses": {
         "pid": DATA_DIR / "senses.pid",
