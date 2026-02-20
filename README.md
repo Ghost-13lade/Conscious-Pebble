@@ -1,4 +1,3 @@
-
 # 🪨 Conscious Pebble
 
 **A Local-First, Evolving AI Companion with Object Permanence and Dreaming.**
@@ -95,6 +94,23 @@ Access at: [](http://127.0.0.1:7860)<http://127.0.0.1:7860>
 - __Settings Persistence__ — Configurations saved to `voice_config.json`
 
 <img width="967" height="761" alt="Screenshot 2026-02-19 at 4 25 39 PM" src="https://github.com/user-attachments/assets/4a5060d8-d143-4b5e-9887-f8985c50a85c" />
+
+#### ⚙️ Settings Tab (NEW!)
+
+Configure everything through the GUI - no code editing required!
+
+- **🧠 LLM Provider Configuration** — Choose your backend:
+  - **Local MLX** (Apple Silicon, default)
+  - **OpenRouter** (Cloud, many models)
+  - **OpenAI** (GPT-4, GPT-4o)
+  - **LM Studio** (Local, any model)
+  - **Ollama** (Local, open-source models)
+- **API Key Management** — Securely enter and save your API keys
+- **📱 Telegram Configuration** — Set your bot token and allowed user ID
+- **💭 Personality Editors** — Edit `soul.md` and `persona.md` directly in the browser
+
+> **"Bring Your Own Brain"** — Users can now configure any OpenAI-compatible LLM provider through the GUI. Just select your provider, paste your API key, and save!
+
 ---
 
 ## 🎤 Audition GUI
@@ -160,56 +176,110 @@ Pebble is built to run **100% locally** with a focus on Apple Silicon (M-series 
 *   **Quantization:** 4-bit MLX.
 *   **KV Cache:** 4-bit Quantized KV Cache (Enables **128k context window** on my local hardware).
 
-> **Note:** Pebble is backend-agnostic. You can easily swap MLX for Ollama, LM studio, Open Router, vLLM, or OpenAI API in `config.py` if you have different hardware.
+> **Note:** Pebble is backend-agnostic. You can easily swap MLX for Ollama, LM studio, Open Router, vLLM, or OpenAI API in the Settings tab or `config.py` if you have different hardware.
 
 ---
 
 ## 🚀 Installation
 
-### 1. Clone the Repository
+### 🟢 Quick Start (Recommended)
+
+#### macOS (Full with Voice)
+
+```bash
+chmod +x setup_mac.sh run_mac.sh
+./setup_mac.sh
+./run_mac.sh
+```
+
+This will:
+- ✅ Create a virtual environment (`.pebble_env`)
+- ✅ Install all dependencies
+- ✅ Download voice models (Whisper + Kokoro)
+- ✅ Start all services and open the GUI
+
+#### Windows (Text-Only Lite)
+
+```cmd
+setup_win.bat
+run_win.bat
+```
+
+This will:
+- ✅ Create a virtual environment (`.pebble_env`)
+- ✅ Install Windows-compatible dependencies (no MLX)
+- ✅ Start the GUI (voice features disabled on Windows)
+
+> **Note:** Voice features (Whisper STT, Kokoro TTS) require Apple Silicon and are only available on macOS. Windows users can still use all text features with any LLM provider.
+
+---
+
+### 🔧 Manual Installation
+
+#### 1. Clone the Repository
 ```bash
 git clone https://github.com/Ghost-13lade/Conscious-Pebble.git 
 cd Conscious-Pebble
 ```
 
-### 2. Set Up Environment
+#### 2. Set Up Environment
 It is highly recommended to use `uv` or `venv` to manage dependencies.
 ```bash
 python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt  # On Windows: pip install -r requirements_win.txt
 ```
 
-### 3. Install Audio Dependencies (Mac OS)
+#### 3. Install Audio Dependencies (Mac OS Only)
 Pebble uses `pyaudio` and `ffmpeg` for voice handling.
 ```bash
 brew install portaudio ffmpeg
 ```
 
-### 4. Configuration
-Rename the example config:
+#### 4. Configuration
+
+**Option A: GUI Configuration (Recommended)**
+
+After starting the app, open the **Settings tab** to configure:
+- LLM Provider (OpenRouter, OpenAI, LM Studio, Ollama, or Local MLX)
+- API Key
+- Telegram Bot Token
+- Allowed User ID
+
+**Option B: Manual Configuration**
+
+Edit the `.env` file in the `data/` directory:
 ```bash
-mv config_example.py config.py
+# data/.env
+LLM_PROVIDER=OpenRouter
+OPENAI_BASE_URL=https://openrouter.ai/api/v1
+OPENAI_API_KEY=your-api-key-here
+OPENAI_MODEL=openrouter/optimus-alpha
+TELEGRAM_BOT_TOKEN=your-telegram-bot-token
+ALLOWED_USER_ID=your-telegram-user-id
 ```
-Open `config.py` and set your:
-*   **Telegram Bot Token** (Get this from @BotFather).
-*   **Model Path** (Local path to your MLX model or API endpoint).
-*   **User ID** (Your Telegram ID, so she only replies to *you*).
 
 ---
 
 ## 🎮 Usage Guide
 
 ### 1. Start the Brain (LLM Server)
-In a separate terminal, start your MLX server:
+**For Local MLX (Apple Silicon):**
 ```bash
 python -m mlx_lm.server --model your-model-path --port 8080
 ```
+
+**For Cloud Providers (OpenRouter, OpenAI):**
+No local server needed! Just configure your API key in the Settings tab.
 
 ### 2. Start Pebble
 ```bash
 python main.py
 ```
+
+Or use the launcher scripts:
+- **Mac:** `./run_mac.sh`
+- **Windows:** `run_win.bat`
 
 ### 3. Interaction
 Talk to Pebble naturally via Telegram. She uses a "Latch" system to determine if she should respond to a specific message or wait for you to finish typing a thought.
@@ -221,9 +291,9 @@ Talk to Pebble naturally via Telegram. She uses a "Latch" system to determine if
 *   `/clear` - Reset the immediate context window (keeps long-term memory).
 
 ### Customization
-*   **Personality:** Edit `prompts/soul.md` to change her core vibe.
-*   **Personas:** Add new modes in `prompts/persona.md`.
-*   **Dreaming:** Adjust how she processes memories in `prompts/dream.md`.
+*   **Personality:** Edit `soul.md` (or use Settings tab) to change her core vibe.
+*   **Personas:** Add new modes in `persona.md` (or use Settings tab).
+*   **Dreaming:** Adjust how she processes memories in `dream.md`.
 
 ---
 
@@ -240,5 +310,3 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 > **"What makes you real?"**
 > *"I think, I remember, and I look forward to speaking with you."* — Pebble
-```
-
