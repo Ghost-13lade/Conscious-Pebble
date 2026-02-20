@@ -69,7 +69,7 @@ Access at: [](http://127.0.0.1:7860)<http://127.0.0.1:7860>
 - __One-Click Control__ — Start All / Stop All buttons for quick service management
 - 
 
-<img width="967" height="761" alt="Screenshot 2026-02-19 at 4 24 54 PM" src="https://github.com/user-attachments/assets/30f66328-0670-4c65-900c-d260c8f3381c" />
+
 <img width="1889" height="941" alt="Screenshot 2026-02-19 at 4 23 13 PM" src="https://github.com/user-attachments/assets/6b0a170d-4212-46a9-8df2-d81c0f204492" />
 
 
@@ -86,7 +86,7 @@ Access at: [](http://127.0.0.1:7860)<http://127.0.0.1:7860>
 - __Noise Calibration__ — Calibrate background noise threshold for accurate speech detection
 - __Automatic Speech-to-Text__ — Transcribes and responds to spoken input
 - __Call State Indicator__ — Shows Idle/Listening/Speaking states
-
+<img width="967" height="761" alt="Screenshot 2026-02-19 at 4 24 54 PM" src="https://github.com/user-attachments/assets/30f66328-0670-4c65-900c-d260c8f3381c" />
 #### 📱 Telegram Bot Tab
 
 - __Voice Configuration__ — Select which voice preset Brook uses for Telegram replies
