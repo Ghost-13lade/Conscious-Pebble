@@ -47,6 +47,99 @@ Pebble knows *how* she/he is communicating and adjusts her/his personality engin
 
 
 
+## 🎛️ Home Control Center
+
+The Home Control Center is a Gradio-based dashboard for managing all Brook services and interacting with the AI companion directly.
+
+__Launch:__
+
+```bash
+python brook_control.py
+```
+
+Access at: [](http://127.0.0.1:7860)<http://127.0.0.1:7860>
+
+### Key GUI Features
+
+#### 🖥️ Control Center Tab
+
+- __Service Management__ — Start, stop, and monitor Brain (MLX LLM server), Senses (voice synthesis service, future eyes-module), and Bot (Telegram bot)
+- __Health Monitoring__ — Real-time status indicators showing PID, running state, and API health
+- __Log Viewer__ — View the latest 50 lines of logs for each service
+- __One-Click Control__ — Start All / Stop All buttons for quick service management
+- 
+<img width="967" height="761" alt="Screenshot 2026-02-19 at 4 25 45 PM" src="https://github.com/user-attachments/assets/4b2ab3f3-1fed-4bdd-99c9-b0a45439388b" />
+<img width="967" height="761" alt="Screenshot 2026-02-19 at 4 25 39 PM" src="https://github.com/user-attachments/assets/4a5060d8-d143-4b5e-9887-f8985c50a85c" />
+<img width="967" height="761" alt="Screenshot 2026-02-19 at 4 24 54 PM" src="https://github.com/user-attachments/assets/30f66328-0670-4c65-900c-d260c8f3381c" />
+<img width="1889" height="941" alt="Screenshot 2026-02-19 at 4 23 13 PM" src="https://github.com/user-attachments/assets/6b0a170d-4212-46a9-8df2-d81c0f204492" />
+<img width="1548" height="941" alt="Screenshot 2026-02-19 at 4 23 58 PM" src="https://github.com/user-attachments/assets/f37edf17-84e2-4401-ac06-0c1728eddea5" />
+
+#### 💬 Home Mode Chat Tab
+
+- __Direct Chat Interface__ — Interact with Brook through a chatbot UI
+- __Voice Replies__ — Toggle voice responses on/off
+- __Audio Input__ — Upload audio files or record directly from microphone
+- __Bot Profile Selection__ — Switch between different bot profiles
+
+#### 📞 Call Mode Tab (Hands-Free MVP)
+
+- __Voice Conversation__ — Real-time hands-free voice interaction
+- __Noise Calibration__ — Calibrate background noise threshold for accurate speech detection
+- __Automatic Speech-to-Text__ — Transcribes and responds to spoken input
+- __Call State Indicator__ — Shows Idle/Listening/Speaking states
+
+#### 📱 Telegram Bot Tab
+
+- __Voice Configuration__ — Select which voice preset Brook uses for Telegram replies
+- __Reply Mode__ — Choose between "Text Only" or "Text + Voice" responses
+- __Settings Persistence__ — Configurations saved to `voice_config.json`
+
+---
+
+## 🎤 Audition GUI
+
+The Audition GUI is a voice tuning tool for previewing and customizing Kokoro voice presets.
+<img width="1247" height="873" alt="Screenshot 2026-02-19 at 4 27 51 PM" src="https://github.com/user-attachments/assets/a44707da-e335-4b8f-9686-cf4c643c20cd" />
+
+__Launch:__
+
+```bash
+python audition.py
+```
+
+Access at: [](http://127.0.0.1:7861)<http://127.0.0.1:7861>
+
+### Key Features
+
+#### 🎵 Voice Selection
+
+- __10 Kokoro Voices__ — Choose from af_heart (Brook), af_bella, af_nicole, af_sarah, af_sky (Emily), am_michael, am_adam, am_eric, am_liam, am_onyx
+- __Auto-Naming__ — Voice names automatically update based on selection
+
+#### ⚙️ Voice Parameters
+
+- __Base Speed__ — Adjust speech speed from 0.5x to 2.0x
+- __Playback Rate__ — Fine-tune pitch via playback rate (19,950–28,050 Hz)
+- __Real-Time Preview__ — Test changes instantly via the Senses server
+
+#### 💾 Configuration Management
+
+- __Save Presets__ — Save custom voice configurations
+- __Load Presets__ — Quickly load previously saved configs
+- __Refresh List__ — Update the dropdown with newly saved presets
+- __Persistent Storage__ — Configs saved to `brook_voices.json`
+
+#### 🔊 Preview System
+
+- __Test Text Input__ — Enter custom text to preview how it sounds
+- __Audio Playback__ — Listen to generated audio directly in the browser
+- __Status Feedback__ — Get immediate feedback on synthesis success/failure
+
+__Note:__ The Audition GUI requires the Senses service running on port 8081 for audio synthesis. Start it from the Home Control Center or run:
+
+```bash
+python -m uvicorn senses_service:app --host 0.0.0.0 --port 8081
+```
 
 
 ---
