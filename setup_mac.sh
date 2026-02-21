@@ -105,10 +105,6 @@ fi
 echo "  Installing from requirements.txt..."
 pip install -r "$REQUIREMENTS_FILE" --quiet
 
-# Install huggingface_hub for model downloads
-echo "  Installing huggingface_hub for model downloads..."
-pip install huggingface_hub --quiet
-
 echo -e "${GREEN}✓ Dependencies installed${NC}"
 
 # =============================================================================
