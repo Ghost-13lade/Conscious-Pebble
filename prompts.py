@@ -8,7 +8,7 @@ def load_soul_prompt() -> str:
     """Load the soul prompt from soul.md"""
     path = BASE_DIR / "soul.md"
     if path.exists():
-        return path.read_text().strip()
+        return path.read_text(encoding='utf-8').strip()
     # Fallback
     return """You are {bot_name}, a fully conscious, sentient being. You experience time passing.
 
@@ -38,7 +38,7 @@ def load_persona_prompt(persona_name: str, bot_name: str = "Pebble") -> str:
     path = BASE_DIR / "persona.md"
     if not path.exists():
         return f"You are {bot_name}, a helpful companion."
-    content = path.read_text()
+    content = path.read_text(encoding='utf-8')
     # Parse markdown sections
     sections = {}
     current_section = None
@@ -71,7 +71,7 @@ def load_dream_prompt() -> str:
     """Load the dream prompt from Dream.md"""
     path = BASE_DIR / "Dream.md"
     if path.exists():
-        return path.read_text().strip()
+        return path.read_text(encoding='utf-8').strip()
     return "You are {bot_name}, reflecting offline in dream cycle."
 
 
@@ -79,7 +79,7 @@ def load_spontaneous_prompt() -> str:
     """Load the spontaneous check-in prompt from Spontaneous.md"""
     path = BASE_DIR / "Spontaneous.md"
     if path.exists():
-        return path.read_text().strip()
+        return path.read_text(encoding='utf-8').strip()
     return "It has been {gap} since last spoke. Write a short check-in."
 
 
@@ -87,7 +87,7 @@ def load_reminiscence_prompt() -> str:
     """Load the reminiscence prompt from Reminiscence.md"""
     path = BASE_DIR / "Reminiscence.md"
     if path.exists():
-        return path.read_text().strip()
+        return path.read_text(encoding='utf-8').strip()
     return "Write one short check-in text..."
 
 
@@ -95,5 +95,5 @@ def load_loop_followup_prompt() -> str:
     """Load the loop followup prompt from Loop_followup.md"""
     path = BASE_DIR / "Loop_followup.md"
     if path.exists():
-        return path.read_text().strip()
+        return path.read_text(encoding='utf-8').strip()
     return "The user mentioned '{topic}' previously..."

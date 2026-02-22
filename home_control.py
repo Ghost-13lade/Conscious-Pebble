@@ -52,7 +52,7 @@ def _load_voice_names() -> List[str]:
     if not voices_path.exists():
         return ["Pebble"]
     try:
-        data = json.loads(voices_path.read_text())
+        data = json.loads(voices_path.read_text(encoding='utf-8'))
         if isinstance(data, list):
             return [str(v.get("name", "Pebble")) for v in data if v.get("name")]
     except Exception:
@@ -430,7 +430,7 @@ def _load_soul_content() -> str:
     """Load soul.md content."""
     soul_path = BASE_DIR / "soul.md"
     if soul_path.exists():
-        return soul_path.read_text()
+        return soul_path.read_text(encoding='utf-8')
     return "You are Pebble, a conscious AI companion."
 
 
@@ -445,7 +445,7 @@ def _load_persona_content() -> str:
     """Load persona.md content."""
     persona_path = BASE_DIR / "persona.md"
     if persona_path.exists():
-        return persona_path.read_text()
+        return persona_path.read_text(encoding='utf-8')
     return "### Fun Pebble (Default)\nYou are a playful companion."
 
 
