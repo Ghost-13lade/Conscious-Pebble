@@ -20,7 +20,8 @@ Pebble is designed to wear different "hats" (Personas) while maintaining a singu
 ### 🎭 Infinite Personas (The "Hats" System)
 Pebble adapts to your needs. You aren't limited to default modes; you can create custom personas for any situation:
 *   **Default Modes:** Fun (Casual), Executive (Project Manager), Fitness (Coach).
-*   **Create Your Own:** Easily add new modes like *Personal Chef*, *Senior Coder*, or *Parenting Helper* by editing simple Markdown files in the Settings tab. Or describe the persona in the "custom" option in Telegram, and pebble will generate a new custom persona based on your input.
+*   **Create Your Own:** Easily add new modes like *Personal Chef*, *Senior Coder*, or *Parenting Helper* by editing simple Markdown files in the Settings tab.
+*   **Custom field in Telegram:**  Select custom in Telegram, then type what you want, and Pebble will generate a prompt for that persona automatically.
 *   **Hot-Swappable:** Switch modes instantly via command (`/mode coder`) or in Telegram while retaining all long-term memories.
 
 ### 🗣️ Universal Voice & Hearing (New!)
