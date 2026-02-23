@@ -1,8 +1,60 @@
+# Python
 __pycache__/
 *.pyc
-*.db
-chroma_db/
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual Environments
+.pebble_env/
+venv/
+.venv/
+env/
+ENV/
+
+# Environment Variables (CRITICAL - contains API keys)
 .env
-.DS_Store
-logs/
+.env.local
+.env.*.local
+
+# Database & Data
+*.db
+*.sqlite
+*.sqlite3
+chroma_db/
 data/
+
+# Logs
+*.log
+logs/
+
+# OS Files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE
+.idea/
+.vscode/
+*.sublime-*
+
+# Models (large files)
+models/
+*.gguf
+*.bin
+*.safetensors
+
+# Audio temp files
+*.wav
+*.mp3
+*.ogg
+!true_voices.json
+
+# PID files
+*.pid
