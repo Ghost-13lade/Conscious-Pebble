@@ -21,16 +21,21 @@ Pebble is designed to wear different "hats" (Personas) while maintaining a singu
 Pebble adapts to your needs. You aren't limited to default modes; you can create custom personas for any situation:
 *   **Default Modes:** Fun (Casual), Executive (Project Manager), Fitness (Coach).
 *   **Create Your Own:** Easily add new modes like *Personal Chef*, *Senior Coder*, or *Parenting Helper* by editing simple Markdown files in the Settings tab.
-*   **Custom field in Telegram:**  Select custom in Telegram, then type what you want, and Pebble will generate a prompt for that persona automatically.
+*   **Custom field in Telegram:** Select custom in Telegram, then type what you want, and Pebble will generate a prompt for that persona automatically.
 *   **Hot-Swappable:** Switch modes instantly via command (`/mode coder`) or in Telegram while retaining all long-term memories.
 
-### 🗣️ Universal Voice & Hearing (New!)
+### 🗣️ Universal Voice & Hearing
 Pebble knows *how* it is communicating and adjusts it's personality engine accordingly.
 *   **Mac Users (Apple Silicon):** Run **100% Locally** using MLX (Kokoro TTS + Whisper STT). Private and offline-capable. Also can connect to cloud APIs.
 *   **Windows/Linux Users:** Connect to **Cloud APIs** (ElevenLabs + Groq + OpenAI) for a high-quality voice experience on any hardware.
 *   **Modality Awareness:**
     *   *Text Mode:* Uses emojis, lowercase styling, and internet slang.
     *   *Voice Mode:* Strips visual cues, adjusts punctuation for breathability, and uses natural fillers.
+
+### 🤖 Multi-Bot Support (New!)
+*   **Multiple Telegram Bots:** Configure multiple bots, each with their own name, token, and user ID
+*   **Per-Bot Voice Settings:** Each bot can have a different voice and reply mode (Text Only or Text + Voice)
+*   **Easy Management:** Add, edit, and delete bots through the Settings GUI
 
 ### 🌙 Advanced Memory & Dreaming
 *   **Tiered Memory System:** Short-term (Context), Medium-term (Daily Vectors), and Long-term (Core Facts).
@@ -42,10 +47,6 @@ Pebble knows *how* it is communicating and adjusts it's personality engine accor
 ### ⚡ Smart Agency & Utility
 *   **Natural Language Reminders:** *"Remind me to workout at 5pm"* (One-off) or *"I want to go to bed at 8pm, remind me every night"* (Recurring/Cron)
 *   **Weather Grounding:** "Senses" the local environment (via `wttr.in`) to ground conversations in reality.
-
-<img width="454" height="580" alt="image" src="https://github.com/user-attachments/assets/2e83fd93-428d-40ff-8a6c-3c63f3f78ea4" />
-
-<img width="454" height="970" alt="Screenshot 2026-02-16 at 3 57 43 PM" src="https://github.com/user-attachments/assets/49faf856-1389-4fc9-a3c0-74dbc3132b61" />
 
 ---
 
@@ -103,7 +104,9 @@ The "Lite" experience. Relies on Cloud APIs (OpenRouter, Groq, ElevenLabs) to av
 
 ## ⚙️ Configuration (The Settings Tab)
 
-Once launched, open `http://localhost:7860` and go to the **Settings** tab.
+Once launched, open `http://localhost:7860` - the **Settings** tab is the first tab you'll see!
+
+### Configuration Summary
 
 | Component | Mac Default | Windows Recommended | API Key Needed? |
 | :--- | :--- | :--- | :--- |
@@ -113,6 +116,15 @@ Once launched, open `http://localhost:7860` and go to the **Settings** tab.
 | **Search** | DuckDuckGo | DuckDuckGo | No (Free) |
 
 *All settings are saved automatically to your local `.env` file.*
+
+### Smart Configuration UI
+The Settings tab now features **conditional visibility** - only relevant fields are shown based on your provider selection:
+
+- **Local MLX selected** → Shows MLX model path, KV bits, context size
+- **Cloud provider selected** → Shows API key, base URL, model name
+- **TTS Provider = ElevenLabs** → Shows ElevenLabs API key and voice ID
+- **TTS Provider = OpenAI** → Shows OpenAI voice selection
+- **STT Provider = Groq** → Shows Groq API key
 
 ---
 
@@ -127,7 +139,39 @@ python home_control.py
 
 Access at: http://127.0.0.1:7860
 
+### Tab Order
+1. **Settings** - Configure everything (default tab)
+2. **Control Center** - Manage services
+3. **Home Mode Chat** - Direct chat interface
+4. **Call Mode** - Hands-free voice conversation
+5. **Telegram Bot** - Bot voice settings
+
 ### Key GUI Features
+
+#### ⚙️ Settings Tab (Default)
+Configure everything through the GUI - no code editing required!
+
+**LLM Provider Configuration:**
+- Choose your backend: Local MLX, OpenRouter, OpenAI, LM Studio, or Ollama
+- Conditional fields based on provider (API vs local config)
+- **Native folder picker** for MLX models (macOS Finder / Windows Explorer)
+
+**Telegram Bot Management:**
+- **Multi-bot support** - Add, edit, and delete multiple bots
+- Each bot has: Name, Token, Allowed User ID
+- Configure voice settings per-bot in the Telegram Bot tab
+
+**Voice Configuration (TTS):**
+- Local Kokoro, ElevenLabs, OpenAI, or None
+- Provider-specific fields appear automatically
+
+**Hearing Configuration (STT):**
+- Local Whisper, Groq, or OpenAI
+- API key fields shown only when needed
+
+**Additional Settings:**
+- 🔍 Web Search toggle
+- 💭 Personality Editors - Edit `soul.md` and `persona.md` directly
 
 #### 🖥️ Control Center Tab
 - **Service Management** — Start, stop, and monitor Brain (MLX LLM server), Senses (voice synthesis service), and Bot (Telegram bot)
@@ -135,15 +179,11 @@ Access at: http://127.0.0.1:7860
 - **Log Viewer** — View the latest 50 lines of logs for each service
 - **One-Click Control** — Start All / Stop All buttons for quick service management
 
-<img width="1889" height="941" alt="Screenshot 2026-02-19 at 4 23 13 PM" src="https://github.com/user-attachments/assets/6b0a170d-4212-46a9-8df2-d81c0f204492" />
-
 #### 💬 Home Mode Chat Tab
 - **Direct Chat Interface** — Interact with Pebble through a chatbot UI
 - **Voice Replies** — Toggle voice responses on/off
 - **Audio Input** — Upload audio files or record directly from microphone
 - **Bot Profile Selection** — Switch between different bot profiles
-
-<img width="1548" height="941" alt="Screenshot 2026-02-19 at 4 23 58 PM" src="https://github.com/user-attachments/assets/f37edf17-84e2-4401-ac06-0c1728eddea5" />
 
 #### 📞 Call Mode Tab (Hands-Free MVP)
 - **Voice Conversation** — Real-time hands-free voice interaction
@@ -151,33 +191,17 @@ Access at: http://127.0.0.1:7860
 - **Automatic Speech-to-Text** — Transcribes and responds to spoken input
 - **Call State Indicator** — Shows Idle/Listening/Speaking states
 
-<img width="967" height="761" alt="Screenshot 2026-02-19 at 4 24 54 PM" src="https://github.com/user-attachments/assets/30f66328-0670-4c65-900c-d260c8f3381c" />
-
 #### 📱 Telegram Bot Tab
-- **Voice Configuration** — Select which voice preset Pebble uses for Telegram replies
-- **Reply Mode** — Choose between "Text Only" or "Text + Voice" responses
-- **Settings Persistence** — Configurations saved to `voice_config.json`
-
-<img width="967" height="761" alt="Screenshot 2026-02-19 at 4 25 39 PM" src="https://github.com/user-attachments/assets/4a5060d8-d143-4b5e-9887-f8985c50a85c" />
-
-#### ⚙️ Settings Tab
-Configure everything through the GUI - no code editing required!
-- **🧠 LLM Provider Configuration** — Choose your backend: Local MLX, OpenRouter, OpenAI, LM Studio, or Ollama
-- **🎤 Voice Configuration (TTS)** — Local Kokoro, ElevenLabs, or OpenAI TTS
-- **👂 Hearing Configuration (STT)** — Local Whisper, Groq, or OpenAI Whisper
-- **🔍 Web Search** — Enable/disable DuckDuckGo integration
-- **API Key Management** — Securely enter and save your API keys
-- **💭 Personality Editors** — Edit `soul.md` and `persona.md` directly in the browser
-
-> **"Bring Your Own Brain"** — Users can configure any OpenAI-compatible LLM provider through the GUI. Just select your provider, paste your API key, and save!
+- **Bot Selector** — Choose which bot to configure (multi-bot support)
+- **Voice Configuration** — Select which voice preset each bot uses
+- **Reply Mode** — Choose between "Text Only" or "Text + Voice" per bot
+- **Settings Persistence** — Configurations saved to `bots_config.json`
 
 ---
 
 ## 🎤 Audition GUI
 
 The Audition GUI is a voice tuning tool for previewing and customizing Kokoro voice presets.
-
-<img width="1247" height="873" alt="Screenshot 2026-02-19 at 4 27 51 PM" src="https://github.com/user-attachments/assets/a44707da-e335-4b8f-9686-cf4c643c20cd" />
 
 **Launch:**
 ```bash
@@ -194,13 +218,28 @@ Access at: http://127.0.0.1:7861
 
 ---
 
+## 📁 Configuration Files
+
+| File | Purpose |
+|------|---------|
+| `.env` | API keys, provider settings, tokens |
+| `bots_config.json` | Multi-bot configuration (name, token, user_id, voice, mode) |
+| `voice_config.json` | Default voice settings |
+| `soul.md` | Core personality definition |
+| `persona.md` | Persona mode definitions |
+
+---
+
 ## 🗺️ Roadmap & Future
 
 *   [x] **Universal Installer** (Mac & Windows)
 *   [x] **Cloud/Local Hybrid Engine**
 *   [x] **Web Search Integration**
+*   [x] **Multi-Bot Support**
+*   [x] **Smart Settings UI** (conditional visibility)
+*   [x] **Native Folder Picker** for MLX models
 *   [ ] **Computer Vision:** "Give Pebble eyes" so you can text images.
-*   [ ] **Pebble Hardware:** A dedicated offline device to take Pebble on the go. (Interest check: Let me know if you want one!)
+*   [ ] **Pebble Hardware:** A dedicated offline device to take Pebble on the go.
 *   [ ] **Enhanced Emotion Detection:** Analyzing audio tone/pitch, not just words.
 
 ---
