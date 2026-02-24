@@ -259,7 +259,6 @@ def _start_service(name: str) -> None:
     if name == "brain" and get_provider() == "Local MLX":
         model_path = resolve_mlx_model_path()
         kv_bits = get_mlx_kv_bits()
-        context_size = get_mlx_context_size()
         cmd = [
             "python",
             "-m",
@@ -267,12 +266,11 @@ def _start_service(name: str) -> None:
             "server",
             "--model", model_path,
             "--port", "8080",
-            "--max-kv-size", context_size,
             "--log-level", "INFO",
         ]
-        env_add = {"MLX_KV_BITS": kv_bits}
+        # Note: KV bits can be set via environment variable if needed
+        env_add = {}
         print(f"[Brain] Starting MLX server with model: {model_path}")
-        print(f"[Brain] Context size: {context_size}, KV bits: {kv_bits}")
     
     if _pid_running(_read_pid(pid_file)):
         return
