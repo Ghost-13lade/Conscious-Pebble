@@ -4,7 +4,7 @@ Loads settings from environment variables and .env file in data directory.
 """
 import os
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 # Try to import dotenv, but don't crash if not available
 try:
@@ -271,6 +271,100 @@ def apply_provider_preset(provider: str) -> Dict[str, str]:
             # Don't overwrite existing API key with preset placeholder
             pass
     return preset
+
+
+# =============================================================================
+# MLX MODEL MANAGEMENT
+# =============================================================================
+
+def scan_models_directory(root_dir: str) -> List[str]:
+    """
+    Scan a directory for valid MLX model subfolders.
+    A valid model folder contains config.json or config.yaml.
+    Returns a list of folder names (not full paths).
+    """
+    if not root_dir or not Path(root_dir).exists():
+        return []
+    
+    models = []
+    root_path = Path(root_dir)
+    
+    try:
+        for item in root_path.iterdir():
+            if item.is_dir():
+                # Check for config files (indicates valid model)
+                config_json = item / "config.json"
+                config_yaml = item / "config.yaml"
+                config_yml = item / "config.yml"
+                
+                if config_json.exists() or config_yaml.exists() or config_yml.exists():
+                    models.append(item.name)
+    except PermissionError:
+        pass
+    
+    return sorted(models)
+
+
+def get_mlx_models_root() -> str:
+    """Get the MLX models root directory."""
+    return get_config("MLX_MODELS_ROOT", "")
+
+
+def get_mlx_selected_model() -> str:
+    """Get the selected MLX model name (subfolder name or HF ID)."""
+    return get_config("MLX_SELECTED_MODEL", "")
+
+
+def get_mlx_context_size() -> str:
+    """Get the MLX context size (max_kv_size)."""
+    return get_config("MLX_CONTEXT_SIZE", "8192")
+
+
+def save_mlx_config(
+    models_root: Optional[str] = None,
+    selected_model: Optional[str] = None,
+    kv_bits: Optional[str] = None,
+    context_size: Optional[str] = None,
+) -> None:
+    """Save MLX configuration to .env file."""
+    if models_root is not None:
+        save_env_value("MLX_MODELS_ROOT", models_root)
+    if selected_model is not None:
+        save_env_value("MLX_SELECTED_MODEL", selected_model)
+        # Also update MLX_MODEL_PATH for backwards compatibility
+        if models_root and selected_model:
+            # Check if it's a local path or HF ID
+            if Path(models_root).exists():
+                model_path = str(Path(models_root) / selected_model)
+            else:
+                model_path = selected_model  # Assume HF ID
+            save_env_value("MLX_MODEL_PATH", model_path)
+    if kv_bits is not None:
+        save_env_value("MLX_KV_BITS", kv_bits)
+    if context_size is not None:
+        save_env_value("MLX_CONTEXT_SIZE", context_size)
+    
+    reload_env()
+
+
+def resolve_mlx_model_path() -> str:
+    """
+    Resolve the full MLX model path.
+    Priority:
+    1. MLX_MODELS_ROOT + MLX_SELECTED_MODEL (local folder)
+    2. MLX_MODEL_PATH (direct path or HF ID)
+    3. Default HF ID
+    """
+    models_root = get_mlx_models_root()
+    selected_model = get_mlx_selected_model()
+    
+    if models_root and selected_model:
+        local_path = Path(models_root) / selected_model
+        if local_path.exists():
+            return str(local_path)
+    
+    # Fall back to direct path or HF ID
+    return get_mlx_model_path()
 
 
 # =============================================================================

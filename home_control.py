@@ -41,6 +41,13 @@ from config import (
     get_openai_tts_voice,
     get_web_search_enabled,
     save_env_value,
+    # MLX Model Management
+    scan_models_directory,
+    get_mlx_models_root,
+    get_mlx_selected_model,
+    get_mlx_context_size,
+    save_mlx_config,
+    resolve_mlx_model_path,
 )
 from db import (
     get_active_mode,
@@ -139,19 +146,9 @@ SERVICES: Dict[str, Dict[str, Path | list[str] | dict[str, str]]] = {
     "brain": {
         "pid": DATA_DIR / "brain.pid",
         "log": DATA_DIR / "mlx_server.log",
-        "cmd": [
-            "python",
-            "-m",
-            "mlx_lm",
-            "server",
-            "--model",
-            MLX_MODEL_PATH,
-            "--port",
-            "8080",
-            "--log-level",
-            "INFO",
-        ],
-        "env": {"MLX_KV_BITS": MLX_KV_BITS},
+        # cmd is now built dynamically in _start_service for Local MLX
+        "cmd": [],  # Placeholder - built dynamically
+        "env": {},  # Built dynamically
     },
     "senses": {
         "pid": DATA_DIR / "senses.pid",
@@ -262,6 +259,26 @@ def _start_service(name: str) -> None:
     log_file: Path = spec["log"]  # type: ignore[assignment]
     cmd: list[str] = spec["cmd"]  # type: ignore[assignment]
     env_add: dict[str, str] = spec["env"]  # type: ignore[assignment]
+    
+    # Build brain command dynamically for Local MLX
+    if name == "brain" and get_provider() == "Local MLX":
+        model_path = resolve_mlx_model_path()
+        kv_bits = get_mlx_kv_bits()
+        context_size = get_mlx_context_size()
+        cmd = [
+            "python",
+            "-m",
+            "mlx_lm",
+            "server",
+            "--model", model_path,
+            "--port", "8080",
+            "--max-kv-size", context_size,
+            "--log-level", "INFO",
+        ]
+        env_add = {"MLX_KV_BITS": kv_bits}
+        print(f"[Brain] Starting MLX server with model: {model_path}")
+        print(f"[Brain] Context size: {context_size}, KV bits: {kv_bits}")
+    
     if _pid_running(_read_pid(pid_file)):
         return
     with open(log_file, "a", buffering=1) as lf:
@@ -747,6 +764,90 @@ with gr.Blocks(title="Home Control Center") as demo:
                 _save_llm_settings,
                 inputs=[provider_dropdown, api_key_input, base_url_input, model_input],
                 outputs=[llm_status],
+            )
+            
+            # --- MLX Model Configuration (shown for Local MLX) ---
+            gr.Markdown("---\n#### 🖥️ Local MLX Model Configuration")
+            gr.Markdown("Configure local model path, quantization, and context size for Apple Silicon.")
+            
+            # Get current MLX settings
+            current_mlx_root = get_mlx_models_root()
+            current_mlx_model = get_mlx_selected_model()
+            current_mlx_kv = get_mlx_kv_bits()
+            current_mlx_context = get_mlx_context_size()
+            
+            with gr.Row():
+                mlx_models_root_input = gr.Textbox(
+                    label="Models Root Directory",
+                    value=current_mlx_root,
+                    placeholder="/Users/you/models or ~/models",
+                    info="Folder containing model subfolders (e.g., Model1/, Model2/)",
+                    scale=3,
+                )
+                mlx_browse_btn = gr.Button("📂 Browse", scale=1)
+            
+            mlx_model_dropdown = gr.Dropdown(
+                label="Select Model",
+                choices=scan_models_directory(current_mlx_root) if current_mlx_root else [],
+                value=current_mlx_model,
+                info="Select a model subfolder, or enter HuggingFace ID (e.g., mlx-community/Llama-3.2-3B-Instruct-4bit)",
+                interactive=True,
+            )
+            
+            with gr.Row():
+                mlx_kv_dropdown = gr.Dropdown(
+                    label="KV Cache Bits",
+                    choices=["4", "6", "8"],
+                    value=current_mlx_kv,
+                    info="Lower = less memory, higher = more accuracy",
+                )
+                mlx_context_dropdown = gr.Dropdown(
+                    label="Context Size",
+                    choices=["4096", "8192", "16384", "32768", "65536"],
+                    value=current_mlx_context,
+                    info="Max tokens for context window",
+                )
+            
+            mlx_status = gr.Textbox(label="Status", interactive=False)
+            save_mlx_btn = gr.Button("Save MLX Settings", variant="primary")
+            
+            def _browse_mlx_models_root():
+                """Open folder browser for MLX models root."""
+                import tkinter as tk
+                from tkinter import filedialog
+                root = tk.Tk()
+                root.withdraw()
+                folder = filedialog.askdirectory(title="Select Models Root Directory")
+                return folder if folder else ""
+            
+            def _refresh_mlx_models(root: str):
+                """Refresh model dropdown based on root directory."""
+                models = scan_models_directory(root)
+                return gr.Dropdown(choices=models, value=None)
+            
+            def _save_mlx_settings(root: str, model: str, kv_bits: str, context: str) -> str:
+                """Save MLX settings to .env file."""
+                save_mlx_config(
+                    models_root=root,
+                    selected_model=model,
+                    kv_bits=kv_bits,
+                    context_size=context,
+                )
+                return f"✅ MLX settings saved! Model: {model or 'Not selected'}"
+            
+            mlx_browse_btn.click(
+                _browse_mlx_models_root,
+                outputs=[mlx_models_root_input],
+            )
+            mlx_models_root_input.change(
+                _refresh_mlx_models,
+                inputs=[mlx_models_root_input],
+                outputs=[mlx_model_dropdown],
+            )
+            save_mlx_btn.click(
+                _save_mlx_settings,
+                inputs=[mlx_models_root_input, mlx_model_dropdown, mlx_kv_dropdown, mlx_context_dropdown],
+                outputs=[mlx_status],
             )
             
             # --- Telegram Configuration Section ---
