@@ -59,7 +59,7 @@ from db import (
 )
 from emotional_core import EmotionalCore
 from memory_engine import MemoryEngine
-from tools import get_voice_config, set_voice_config
+from tools import get_voice_config, set_voice_config, get_bots_config, save_bots_config, get_bot_names, get_bot_config, add_bot, update_bot, delete_bot
 from voice_engine import synthesize_voice_bytes, transcribe_audio_file
 
 
@@ -108,27 +108,22 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
-# Dynamically discover actual Telegram bot
-def _get_telegram_bot_info() -> Dict[str, Dict[str, str]]:
-    if not TELEGRAM_BOT_TOKEN:
-        return {"Pebble": {"user_id": "brook_local", "description": "Local fallback (no token)"}}
-    try:
-        import telegram
-        bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
-        bot_info = bot.get_me()
-        username = bot_info.username or "Pebble"
-        name = bot_info.name or username
-        return {
-            name: {
-                "user_id": f"telegram_{bot_info.id}",
-                "description": f"Telegram bot: @{username}",
-            }
+# Load bot profiles from bots_config.json
+def _load_bot_profiles() -> Dict[str, Dict[str, str]]:
+    """Load bot profiles from bots_config.json for UI dropdowns."""
+    bots = get_bots_config()
+    profiles = {}
+    for name, config in bots.items():
+        profiles[name] = {
+            "user_id": config.get("user_id", "local_user"),
+            "description": f"Bot: {name}",
+            "token": config.get("token", ""),
+            "voice_name": config.get("voice_name", "Pebble"),
+            "voice_mode": config.get("voice_mode", "Text Only"),
         }
-    except Exception as e:
-        print(f"[WARN] Could not fetch Telegram bot info: {e}")
-        return {"Pebble": {"user_id": "brook_local", "description": "Local fallback"}}
+    return profiles
 
-BOT_PROFILES = _get_telegram_bot_info()
+BOT_PROFILES = _load_bot_profiles()
 ACTIVE_BOT_NAME = list(BOT_PROFILES.keys())[0] if BOT_PROFILES else "Pebble"
 ACTIVE_USER_ID = BOT_PROFILES.get(ACTIVE_BOT_NAME, {}).get("user_id", "brook_local")
 
@@ -730,21 +725,39 @@ with gr.Blocks(title="Home Control Center") as demo:
 
         with gr.TabItem("Telegram Bot"):
             gr.Markdown("### Telegram Bot Voice Settings")
-            gr.Markdown("Configure how Pebble replies to Telegram messages.")
+            gr.Markdown("Select a bot and configure its voice settings.")
             
-            # Load current settings on page load
-            current_voice, current_mode = _get_telegram_settings()
+            # Bot selector
+            bot_names = get_bot_names()
+            selected_bot = gr.Dropdown(
+                label="Select Bot",
+                choices=bot_names,
+                value=bot_names[0] if bot_names else "Pebble",
+            )
+            
+            # Load settings for selected bot
+            def _get_bot_voice_settings(bot_name: str) -> Tuple[str, str]:
+                """Get voice settings for a specific bot."""
+                bot_config = get_bot_config(bot_name)
+                if bot_config:
+                    return (
+                        bot_config.get("voice_name", "Pebble"),
+                        bot_config.get("voice_mode", "Text Only"),
+                    )
+                return "Pebble", "Text Only"
+            
+            initial_voice, initial_mode = _get_bot_voice_settings(bot_names[0] if bot_names else "Pebble")
             
             with gr.Row():
                 telegram_voice_dropdown = gr.Dropdown(
                     label="Voice",
                     choices=VOICE_NAMES,
-                    value=current_voice,
+                    value=initial_voice,
                 )
                 telegram_mode_radio = gr.Radio(
                     label="Reply Mode",
                     choices=["Text Only", "Text + Voice"],
-                    value=current_mode,
+                    value=initial_mode,
                 )
             
             save_telegram_btn = gr.Button("Save Settings", variant="primary")
@@ -754,8 +767,33 @@ with gr.Blocks(title="Home Control Center") as demo:
             gr.Markdown("**Current Settings:**")
             current_settings_display = gr.Textbox(
                 label="",
-                value=f"Voice: {current_voice} | Mode: {current_mode}",
+                value=f"Voice: {initial_voice} | Mode: {initial_mode}",
                 interactive=False,
+            )
+            
+            # Bot selector change handler - load bot's settings
+            def _on_bot_select(bot_name: str) -> Tuple[str, str, str]:
+                voice, mode = _get_bot_voice_settings(bot_name)
+                display = f"Voice: {voice} | Mode: {mode}"
+                return voice, mode, display
+            
+            selected_bot.change(
+                _on_bot_select,
+                inputs=[selected_bot],
+                outputs=[telegram_voice_dropdown, telegram_mode_radio, current_settings_display],
+            )
+            
+            # Save handler - save to bots_config.json
+            def _save_bot_voice_settings(bot_name: str, voice: str, mode: str) -> Tuple[str, str]:
+                """Save voice settings for a specific bot."""
+                update_bot(bot_name, voice_name=voice, voice_mode=mode)
+                display = f"Voice: {voice} | Mode: {mode}"
+                return f"✅ Saved! Bot: {bot_name}, Voice: {voice}, Mode: {mode}", display
+            
+            save_telegram_btn.click(
+                _save_bot_voice_settings,
+                inputs=[selected_bot, telegram_voice_dropdown, telegram_mode_radio],
+                outputs=[telegram_status, current_settings_display],
             )
 
         with gr.TabItem("Settings"):
