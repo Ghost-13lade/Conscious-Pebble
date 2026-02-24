@@ -776,15 +776,12 @@ with gr.Blocks(title="Home Control Center") as demo:
             current_mlx_kv = get_mlx_kv_bits()
             current_mlx_context = get_mlx_context_size()
             
-            with gr.Row():
-                mlx_models_root_input = gr.Textbox(
-                    label="Models Root Directory",
-                    value=current_mlx_root,
-                    placeholder="/Users/you/models or ~/models",
-                    info="Folder containing model subfolders (e.g., Model1/, Model2/)",
-                    scale=3,
-                )
-                mlx_browse_btn = gr.Button("📂 Browse", scale=1)
+            mlx_models_root_input = gr.Textbox(
+                label="Models Root Directory",
+                value=current_mlx_root,
+                placeholder="/Users/you/models or ~/models",
+                info="Type or paste path to folder containing model subfolders (e.g., /Users/you/models)",
+            )
             
             mlx_model_dropdown = gr.Dropdown(
                 label="Select Model",
@@ -811,15 +808,6 @@ with gr.Blocks(title="Home Control Center") as demo:
             mlx_status = gr.Textbox(label="Status", interactive=False)
             save_mlx_btn = gr.Button("Save MLX Settings", variant="primary")
             
-            def _browse_mlx_models_root():
-                """Open folder browser for MLX models root."""
-                import tkinter as tk
-                from tkinter import filedialog
-                root = tk.Tk()
-                root.withdraw()
-                folder = filedialog.askdirectory(title="Select Models Root Directory")
-                return folder if folder else ""
-            
             def _refresh_mlx_models(root: str):
                 """Refresh model dropdown based on root directory."""
                 models = scan_models_directory(root)
@@ -835,10 +823,7 @@ with gr.Blocks(title="Home Control Center") as demo:
                 )
                 return f"✅ MLX settings saved! Model: {model or 'Not selected'}"
             
-            mlx_browse_btn.click(
-                _browse_mlx_models_root,
-                outputs=[mlx_models_root_input],
-            )
+            # Note: Removed tkinter browser - use text input instead (type or paste path)
             mlx_models_root_input.change(
                 _refresh_mlx_models,
                 inputs=[mlx_models_root_input],
