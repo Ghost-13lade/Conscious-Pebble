@@ -780,7 +780,7 @@ with gr.Blocks(title="Home Control Center") as demo:
                 # Hidden file explorer that opens on browse click
                 mlx_file_explorer = gr.FileExplorer(
                     label="Select Models Folder",
-                    root_dir="~",
+                    root_dir=str(Path.home()),
                     file_count="single",
                     interactive=True,
                     visible=False,
