@@ -49,6 +49,18 @@ Pebble knows *how* it is communicating and adjusts it's personality engine accor
 
 ---
 
+## ⚡ Requirements
+
+| Platform | Python Version | Hardware |
+|----------|---------------|----------|
+| **Mac (Full)** | Python 3.10-3.12 | Apple Silicon (M1/M2/M3/M4) |
+| **Windows (Lite)** | Python 3.10-3.12 | Any x86_64 |
+| **Linux (Lite)** | Python 3.10-3.12 | Any x86_64 |
+
+> ⚠️ **Python 3.13+ is NOT supported** due to chromadb/pydantic compatibility issues.
+
+---
+
 ## 🚀 Installation
 
 ### 🍎 For Mac (Apple Silicon M1/M2/M3)

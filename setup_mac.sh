@@ -35,20 +35,84 @@ echo -e "${NC}"
 # =============================================================================
 echo -e "${YELLOW}[Step 1/5] Checking prerequisites...${NC}"
 
-# Check for Python 3
-if ! command -v python3 &> /dev/null; then
-    echo -e "${RED}✗ Python 3 is not installed.${NC}"
-    echo "  Please install Python 3 from https://www.python.org or via Homebrew:"
-    echo "  brew install python3"
+# Function to get Python major.minor version
+get_python_version() {
+    local python_cmd="$1"
+    $python_cmd -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>/dev/null
+}
+
+# Function to compare versions (returns 0 if version is in range)
+check_python_version() {
+    local version="$1"
+    local major=$(echo "$version" | cut -d. -f1)
+    local minor=$(echo "$version" | cut -d. -f2)
+    
+    # Python 3.10-3.12 are supported
+    if [[ "$major" -eq 3 ]] && [[ "$minor" -ge 10 ]] && [[ "$minor" -le 12 ]]; then
+        return 0  # Supported
+    else
+        return 1  # Not supported
+    fi
+}
+
+# Supported Python versions: 3.10, 3.11, 3.12
+SUPPORTED_VERSIONS="3.10, 3.11, or 3.12"
+
+# Find a compatible Python
+PYTHON_CMD=""
+
+# First check default python3
+if command -v python3 &> /dev/null; then
+    DEFAULT_VERSION=$(get_python_version python3)
+    if check_python_version "$DEFAULT_VERSION"; then
+        PYTHON_CMD="python3"
+        echo -e "${GREEN}✓ Python $DEFAULT_VERSION found (supported)${NC}"
+    else
+        echo -e "${YELLOW}⚠ Default python3 is version $DEFAULT_VERSION${NC}"
+        if [[ "$DEFAULT_VERSION" > "3.12" ]]; then
+            echo -e "${YELLOW}  Python $DEFAULT_VERSION is NOT fully supported (chromadb/pydantic compatibility).${NC}"
+        fi
+    fi
+fi
+
+# If default python3 not compatible, search for others
+if [[ -z "$PYTHON_CMD" ]]; then
+    echo -e "${YELLOW}  Searching for compatible Python version ($SUPPORTED_VERSIONS)...${NC}"
+    
+    for py_version in "python3.12" "python3.11" "python3.10"; do
+        if command -v "$py_version" &> /dev/null; then
+            FOUND_VERSION=$(get_python_version "$py_version")
+            if check_python_version "$FOUND_VERSION"; then
+                PYTHON_CMD="$py_version"
+                echo -e "${GREEN}✓ Found compatible Python: $py_version ($FOUND_VERSION)${NC}"
+                break
+            fi
+        fi
+    done
+fi
+
+# No compatible Python found
+if [[ -z "$PYTHON_CMD" ]]; then
+    echo -e "${RED}✗ No compatible Python version found!${NC}"
+    echo ""
+    echo "  Conscious Pebble requires Python $SUPPORTED_VERSIONS"
+    echo ""
+    echo "  Your default python3 is: $(python3 --version 2>/dev/null || echo 'not found')"
+    echo ""
+    echo "  Please install a supported Python version:"
+    echo "    brew install python@3.12"
+    echo ""
+    echo "  Or use pyenv:"
+    echo "    pyenv install 3.12.0"
+    echo "    pyenv global 3.12.0"
     exit 1
 fi
-echo -e "${GREEN}✓ Python 3 found: $(python3 --version)${NC}"
 
-# Check for pip
-if ! command -v pip3 &> /dev/null && ! python3 -m pip --version &> /dev/null; then
-    echo -e "${RED}✗ pip is not installed.${NC}"
+# Verify pip is available
+if ! $PYTHON_CMD -m pip --version &> /dev/null; then
+    echo -e "${RED}✗ pip is not installed for $PYTHON_CMD${NC}"
     echo "  Please install pip:"
-    echo "  python3 -m ensurepip --upgrade"
+    echo "  $PYTHON_CMD -m ensurepip --upgrade"
     exit 1
 fi
 echo -e "${GREEN}✓ pip found${NC}"
@@ -79,8 +143,9 @@ if [[ -d "$VENV_DIR" ]]; then
     rm -rf "$VENV_DIR"
 fi
 
-python3 -m venv "$VENV_DIR"
+$PYTHON_CMD -m venv "$VENV_DIR"
 echo -e "${GREEN}✓ Virtual environment created at: $VENV_DIR${NC}"
+echo "  Using Python: $($PYTHON_CMD --version)"
 
 # Activate venv
 source "$VENV_DIR/bin/activate"
