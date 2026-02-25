@@ -53,6 +53,7 @@ from db import (
     update_persona_prompt,
     upsert_user_profile,
     update_user_location,
+    clear_user_names,
 )
 from memory_engine import MemoryEngine
 from emotional_core import EmotionalCore
@@ -562,6 +563,28 @@ async def new_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     # Hard wipe: clear in-memory short-term conversation state.
     short_term_memory[user_id].clear()
     await update.message.reply_text("Memory wiped. Starting a fresh conversation. Hi!")
+
+
+async def resetnames_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Reset the bot name and user name so the bot will ask for them again."""
+    if not update.effective_user or not update.message:
+        return
+
+    user_id = str(update.effective_user.id)
+    if not is_allowed_user(user_id):
+        await update.message.reply_text("Unauthorized user.")
+        return
+
+    # Clear the names from the database
+    clear_user_names(user_id)
+    
+    # Add to pending so it asks for names again
+    pending_name_users.add(user_id)
+    
+    await update.message.reply_text(
+        "Names cleared! Let's start fresh. 💕\n\n"
+        "What should I call you? And what do you want to call me?"
+    )
 
 
 async def process_user_text(
@@ -1074,11 +1097,18 @@ async def run_dream_cycle_for_logs(
         short_term_memory[user_id].clear()
 
 
-def setup_scheduler(app: Application) -> AsyncIOScheduler:
+def get_db_path(bot_name: str = "pebble") -> str:
+    """Get the database path for a specific bot."""
+    # Use relative path from current working directory
+    return f"sqlite:///data/{bot_name.lower()}.db"
+
+
+def setup_scheduler(app: Application, bot_name: str = "pebble") -> AsyncIOScheduler:
+    """Setup scheduler with bot-specific database."""
     scheduler = app.job_queue.scheduler
     scheduler.configure(
         jobstores={
-            "default": SQLAlchemyJobStore(url="sqlite:////Users/ys/Pebble/data/brook.db"),
+            "default": SQLAlchemyJobStore(url=get_db_path(bot_name)),
             "memory": MemoryJobStore(),
         },
         timezone="America/Los_Angeles",
@@ -1122,16 +1152,33 @@ signal.signal(signal.SIGINT, graceful_shutdown)
 signal.signal(signal.SIGTERM, graceful_shutdown)
 
 
-async def run() -> None:
-    if not TELEGRAM_BOT_TOKEN:
+async def run(bot_name: str = "pebble") -> None:
+    """Run the bot with a specific bot name.
+    
+    Args:
+        bot_name: The name of the bot configuration to use (from bots_config.json)
+    """
+    from tools import get_bot_config
+    
+    # Get bot configuration
+    bot_config = get_bot_config(bot_name)
+    if not bot_config:
+        raise RuntimeError(f"Bot '{bot_name}' not found in bots_config.json. Please add it first in the GUI.")
+    
+    bot_token = bot_config.get("token")
+    if not bot_token:
+        raise RuntimeError(f"Bot '{bot_name}' has no token configured. Please add it in the GUI.")
+    
+    if not bot_token:
         raise RuntimeError("TELEGRAM_BOT_TOKEN is missing. Set it in your environment.")
 
     global telegram_app
 
+    print(f"[Bot] Starting bot: {bot_name}")
     init_db()
-    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+    app = ApplicationBuilder().token(bot_token).build()
     telegram_app = app
-    setup_scheduler(app)
+    setup_scheduler(app, bot_name)
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("reset", reset_command))
@@ -1139,6 +1186,7 @@ async def run() -> None:
     app.add_handler(CommandHandler("voice", voice_command))
     app.add_handler(CommandHandler("test", test_command))
     app.add_handler(CommandHandler("location", location_command))
+    app.add_handler(CommandHandler("resetnames", resetnames_command))
     # Debug: catch ALL callbacks first
     app.add_handler(CallbackQueryHandler(handle_voice_callback))
     # app.add_handler(CallbackQueryHandler(handle_voice_callback, pattern=r"^voice_(mode|sel):"))
@@ -1157,6 +1205,7 @@ async def run() -> None:
             BotCommand("reset", "Soft refresh settings/profile"),
             BotCommand("new", "Clear short-term chat memory"),
             BotCommand("voice", "Open voice mode and voice preset controls"),
+            BotCommand("resetnames", "Reset bot and user names"),
         ]
     )
     await app.start()
@@ -1168,8 +1217,19 @@ async def run() -> None:
 
 
 if __name__ == "__main__":
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Run a Pebble bot")
+    parser.add_argument(
+        "bot_name", 
+        nargs="?", 
+        default="Pebble",
+        help="Name of the bot to run (from bots_config.json)"
+    )
+    args = parser.parse_args()
+    
     try:
-        asyncio.run(run())
+        asyncio.run(run(args.bot_name))
     except KeyboardInterrupt:
         print("[Shutdown] Keyboard interrupt — exiting cleanly")
         sys.exit(0)

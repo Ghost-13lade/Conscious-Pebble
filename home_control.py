@@ -2,6 +2,7 @@ import json
 import os
 import signal
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -59,7 +60,7 @@ from db import (
 )
 from emotional_core import EmotionalCore
 from memory_engine import MemoryEngine
-from tools import get_voice_config, set_voice_config, get_bots_config, save_bots_config, get_bot_names, get_bot_config, add_bot, update_bot, delete_bot
+from tools import get_voice_config, set_voice_config, get_bots_config, save_bots_config, get_bot_names, get_bot_config, add_bot, update_bot, delete_bot, rename_bot
 from voice_engine import synthesize_voice_bytes, transcribe_audio_file
 
 
@@ -137,6 +138,21 @@ _brain = Brain(
 )
 
 
+def _get_bot_service_cmd(bot_name: str) -> list[str]:
+    """Get the command to start a specific bot."""
+    return ["python", str(BASE_DIR / "main.py"), bot_name]
+
+
+def _get_bot_log_path(bot_name: str) -> Path:
+    """Get the log path for a specific bot."""
+    return DATA_DIR / f"{bot_name.lower()}_bot.log"
+
+
+def _get_bot_pid_path(bot_name: str) -> Path:
+    """Get the PID file path for a specific bot."""
+    return DATA_DIR / f"{bot_name.lower()}.pid"
+
+
 SERVICES: Dict[str, Dict[str, Path | list[str] | dict[str, str]]] = {
     "brain": {
         "pid": DATA_DIR / "brain.pid",
@@ -162,12 +178,15 @@ SERVICES: Dict[str, Dict[str, Path | list[str] | dict[str, str]]] = {
         ],
         "env": {},
     },
-    "bot": {
-        "pid": DATA_DIR / "bot.pid",
-        "log": DATA_DIR / "brook_bot.log",
-        "cmd": ["python", str(BASE_DIR / "main.py")],
-        "env": {},
-    },
+    # Bot services are now dynamic - created per-bot in _start_service
+}
+
+
+# Track starting state to prevent duplicate clicks
+_service_starting: Dict[str, bool] = {
+    "brain": False,
+    "senses": False,
+    "bot": False,
 }
 
 
@@ -200,10 +219,22 @@ def _pid_running(pid: Optional[int]) -> bool:
 
 
 def _check_brain_health() -> bool:
+    """Check if the brain (MLX server) is healthy."""
+    import urllib.request
+    import urllib.error
+    
+    # Try the v1/models endpoint first (OpenAI-compatible)
     try:
-        with httpx.Client(timeout=2.0) as client:
-            r = client.get("http://localhost:8080/v1/models")
-            return r.status_code < 500
+        req = urllib.request.Request("http://localhost:8080/v1/models")
+        with urllib.request.urlopen(req, timeout=3) as response:
+            return response.status < 500
+    except Exception:
+        pass
+    
+    # Fallback: try root endpoint
+    try:
+        with urllib.request.urlopen("http://localhost:8080/", timeout=3) as response:
+            return response.status < 500
     except Exception:
         return False
 
@@ -218,14 +249,40 @@ def _check_senses_health() -> bool:
 
 
 def _service_status(name: str) -> str:
-    spec = SERVICES[name]
-    pid = _read_pid(spec["pid"])  # type: ignore[index]
-    running = _pid_running(pid)
+    """Get the status of a service including STARTING state."""
+    global _service_starting
+    
+    # Get the starting state (default to False if not in dict)
+    is_starting = _service_starting.get(name, False)
+    
+    # Handle brain
     if name == "brain":
+        if is_starting:
+            return "Brain: STARTING... | PID: - | API: WAIT"
+        pid = _read_pid(SERVICES["brain"]["pid"])
+        running = _pid_running(pid)
         return f"Brain: {'RUNNING' if running else 'STOPPED'} | PID: {pid or '-'} | API: {'OK' if _check_brain_health() else 'DOWN'}"
+    
+    # Handle senses
     if name == "senses":
+        if is_starting:
+            return "Senses: STARTING... | PID: - | API: WAIT"
+        pid = _read_pid(SERVICES["senses"]["pid"])
+        running = _pid_running(pid)
         return f"Senses: {'RUNNING' if running else 'STOPPED'} | PID: {pid or '-'} | API: {'OK' if _check_senses_health() else 'DOWN'}"
-    return f"Bot: {'RUNNING' if running else 'STOPPED'} | PID: {pid or '-'}"
+    
+    # Handle bot - use ACTIVE_BOT_NAME
+    if name == "bot":
+        bot_name = ACTIVE_BOT_NAME
+        if is_starting:
+            return f"{bot_name}: STARTING... | PID: -"
+        pid_file = _get_bot_pid_path(bot_name)
+        pid = _read_pid(pid_file)
+        running = _pid_running(pid)
+        return f"{bot_name}: {'RUNNING' if running else 'STOPPED'} | PID: {pid or '-'}"
+    
+    # Fallback - unknown service
+    return f"{name}: UNKNOWN"
 
 
 def _tail(path: Path, lines: int = 50) -> str:
@@ -238,63 +295,182 @@ def _tail(path: Path, lines: int = 50) -> str:
 
 
 def _snapshot() -> Tuple[str, str, str, str, str, str]:
+    # For bot, use ACTIVE_BOT_NAME
+    bot_name = ACTIVE_BOT_NAME
+    bot_log_path = _get_bot_log_path(bot_name)
     return (
         _service_status("brain"),
         _service_status("senses"),
         _service_status("bot"),
         _tail(SERVICES["brain"]["log"]),  # type: ignore[index]
         _tail(SERVICES["senses"]["log"]),  # type: ignore[index]
-        _tail(SERVICES["bot"]["log"]),  # type: ignore[index]
+        _tail(bot_log_path),
     )
 
 
 def _start_service(name: str) -> None:
-    spec = SERVICES[name]
-    pid_file: Path = spec["pid"]  # type: ignore[assignment]
-    log_file: Path = spec["log"]  # type: ignore[assignment]
-    cmd: list[str] = spec["cmd"]  # type: ignore[assignment]
-    env_add: dict[str, str] = spec["env"]  # type: ignore[assignment]
+    """Start a service if not already running and not already starting."""
+    global _service_starting
     
-    # Build brain command dynamically for Local MLX
-    if name == "brain" and get_provider() == "Local MLX":
-        model_path = resolve_mlx_model_path()
-        kv_bits = get_mlx_kv_bits()
-        context_size = get_mlx_context_size()
-        cmd = [
-            "python",
-            "-m",
-            "mlx_lm",
-            "server",
-            "--model", model_path,
-            "--port", "8080",
-            "--log-level", "INFO",
-        ]
-        # Pass KV bits and max KV size as environment variables
-        env_add = {
-            "MLX_KV_BITS": kv_bits,
-            "MLX_MAX_KV_SIZE": context_size,
-        }
-        print(f"[Brain] Starting MLX server with model: {model_path}")
-        print(f"[Brain] KV bits: {kv_bits}, Max KV size: {context_size}")
-    
-    if _pid_running(_read_pid(pid_file)):
+    # Check if already starting (prevent duplicate clicks)
+    if _service_starting.get(name, False):
+        print(f"[Service] {name} is already starting, ignoring duplicate request")
         return
-    with open(log_file, "a", buffering=1) as lf:
-        env = os.environ.copy()
-        env.update(env_add)
-        proc = subprocess.Popen(
-            cmd,
-            cwd=str(BASE_DIR),
-            stdout=lf,
-            stderr=subprocess.STDOUT,
-            env=env,
-            start_new_session=True,
-        )
-    _write_pid(pid_file, proc.pid)
-    time.sleep(0.5)
+    
+    # Handle bot service specially - use ACTIVE_BOT_NAME
+    if name == "bot":
+        bot_name = ACTIVE_BOT_NAME
+        pid_file = _get_bot_pid_path(bot_name)
+        log_file = _get_bot_log_path(bot_name)
+        
+        existing_pid = _read_pid(pid_file)
+        if _pid_running(existing_pid):
+            print(f"[Service] {bot_name} is already running with PID {existing_pid}")
+            return
+        
+        _service_starting[name] = True
+        try:
+            cmd = _get_bot_service_cmd(bot_name)
+            print(f"Starting {bot_name} with command: {' '.join(cmd)}")
+            
+            with open(log_file, "a", buffering=1) as lf:
+                lf.write(f"\n--- Starting {bot_name} ---\n")
+                lf.write(f"Command: {' '.join(cmd)}\n")
+                lf.write(f"Time: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+                lf.write(f"-----------------------\n")
+            
+            proc = subprocess.Popen(
+                cmd,
+                cwd=str(BASE_DIR),
+                stdout=open(log_file, "a"),
+                stderr=subprocess.STDOUT,
+                env=os.environ.copy(),
+                start_new_session=True,
+            )
+            _write_pid(pid_file, proc.pid)
+            print(f"[Service] {bot_name} started with PID {proc.pid}")
+            time.sleep(0.5)
+        finally:
+            _service_starting[name] = False
+        return
+    
+    # Check if already running (using PID file check first) for brain/senses
+    pid_file: Path = SERVICES[name]["pid"]  # type: ignore[assignment]
+    existing_pid = _read_pid(pid_file)
+    if _pid_running(existing_pid):
+        print(f"[Service] {name} is already running with PID {existing_pid}")
+        return
+    
+    # Mark as starting to prevent duplicate clicks
+    _service_starting[name] = True
+    
+    try:
+        spec = SERVICES[name]
+        log_file: Path = spec["log"]  # type: ignore[assignment]
+        cmd: list[str] = spec["cmd"]  # type: ignore[assignment]
+        env_add: dict[str, str] = spec["env"]  # type: ignore[assignment]
+        
+        # Build brain command dynamically for Local MLX
+        if name == "brain" and get_provider() == "Local MLX":
+            # CRITICAL: Reload environment to get latest settings from .env
+            reload_env()
+            
+            mlx_model_path = resolve_mlx_model_path()
+            mlx_kv_bits = get_mlx_kv_bits()
+            mlx_context_size = get_mlx_context_size()
+
+            # REPLACEMENT CODE FOR BRAIN STARTUP:
+            # Note: mlx_lm.server doesn't support --kv-bits flag
+            cmd = [
+                sys.executable, "-m", "mlx_lm.server",
+                "--model", mlx_model_path,
+                "--port", "8080"
+            ]
+
+            # KV Bit Quantization is NOT supported via CLI for mlx_lm.server
+            # It's handled internally by mlx_lm when loading the model
+
+            # Log the exact command so we can see it in the terminal
+            print(f"Starting Brain with command: {' '.join(cmd)}")
+            print(f"Settings - Model: {mlx_model_path}, KV Bits: {mlx_kv_bits}, Context: {mlx_context_size}")
+
+            # Write to log file
+            log_file = SERVICES["brain"]["log"]
+            with open(log_file, "a", buffering=1) as lf:
+                lf.write(f"\n--- Starting Brain ---\n")
+                lf.write(f"Command: {' '.join(cmd)}\n")
+                lf.write(f"Settings - Model: {mlx_model_path}, KV Bits: {mlx_kv_bits}, Context: {mlx_context_size}\n")
+                lf.write(f"Time: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+                lf.write(f"-----------------------\n")
+
+            # Start the process with proper subprocess.Popen
+            # Pass context size and KV bits as environment variables
+            env = os.environ.copy()
+            if mlx_context_size:
+                env["MLX_CONTEXT_SIZE"] = str(mlx_context_size)
+            if mlx_kv_bits:
+                env["MLX_KV_BITS"] = str(mlx_kv_bits)
+            
+            proc = subprocess.Popen(
+                cmd,
+                stdout=open(log_file, "a"),
+                stderr=subprocess.STDOUT,
+                cwd=os.getcwd(),
+                env=env,
+                start_new_session=True,
+            )
+
+            # Write PID to file
+            pid_file = SERVICES["brain"]["pid"]
+            _write_pid(pid_file, proc.pid)
+            print(f"[Service] Brain started with PID {proc.pid}")
+
+            # Return early since we're handling the process manually
+            return
+        
+        # Standard service startup for non-Local MLX
+        if _pid_running(_read_pid(pid_file)):
+            return
+        with open(log_file, "a", buffering=1) as lf:
+            env = os.environ.copy()
+            env.update(env_add)
+            proc = subprocess.Popen(
+                cmd,
+                cwd=str(BASE_DIR),
+                stdout=lf,
+                stderr=subprocess.STDOUT,
+                env=env,
+                start_new_session=True,
+            )
+        _write_pid(pid_file, proc.pid)
+        print(f"[Service] {name} started with PID {proc.pid}")
+        time.sleep(0.5)
+    finally:
+        # Clear starting flag
+        _service_starting[name] = False
 
 
 def _stop_service(name: str) -> None:
+    # Handle bot service specially - use ACTIVE_BOT_NAME
+    if name == "bot":
+        bot_name = ACTIVE_BOT_NAME
+        pid_file = _get_bot_pid_path(bot_name)
+        pid = _read_pid(pid_file)
+        if not _pid_running(pid):
+            _remove_pid(pid_file)
+            return
+        try:
+            os.killpg(pid, signal.SIGTERM)  # type: ignore[arg-type]
+        except Exception:
+            try:
+                os.kill(pid, signal.SIGTERM)  # type: ignore[arg-type]
+            except Exception:
+                pass
+        time.sleep(0.8)
+        _remove_pid(pid_file)
+        return
+    
+    # Standard stop for brain/senses
     pid_file: Path = SERVICES[name]["pid"]  # type: ignore[index,assignment]
     pid = _read_pid(pid_file)
     if not _pid_running(pid):
@@ -800,6 +976,8 @@ with gr.Blocks(title="Home Control Center") as demo:
                     kv_bits=kv_bits,
                     context_size=context,
                 )
+                # Reload environment so settings are immediately available
+                reload_env()
                 return f"✅ MLX settings saved! Model: {model or 'Not selected'}"
             
             mlx_models_root_input.change(
@@ -841,6 +1019,14 @@ with gr.Blocks(title="Home Control Center") as demo:
             new_bot_token = gr.Textbox(label="Bot Token", type="password", placeholder="123456789:ABCdef...")
             new_bot_user_id = gr.Textbox(label="Allowed User ID", placeholder="Your Telegram user ID")
             
+            # Rename section
+            gr.Markdown("##### Rename Bot")
+            with gr.Row():
+                rename_bot_dropdown = gr.Dropdown(label="Select Bot to Rename", choices=get_bot_names(), value=None)
+                new_bot_name_input = gr.Textbox(label="New Name", placeholder="Enter new bot name")
+            
+            rename_bot_btn = gr.Button("✏️ Rename Bot", variant="secondary")
+            
             bot_mgmt_status = gr.Textbox(label="Status", interactive=False)
             
             with gr.Row():
@@ -850,10 +1036,17 @@ with gr.Blocks(title="Home Control Center") as demo:
             
             def _refresh_bot_list():
                 bots = get_bots_config()
+                bot_names = list(bots.keys())
                 bot_list = [[name, cfg.get("token", "")[:10]+"..." if cfg.get("token") else "None", 
                             cfg.get("user_id", "")] 
                            for name, cfg in bots.items()]
-                return gr.Dataframe(value=bot_list), gr.Dropdown(choices=list(bots.keys()))
+                return gr.Dataframe(value=bot_list), gr.Dropdown(choices=bot_names), gr.Dropdown(choices=bot_names)
+            
+            # Also need to update the dropdowns that use bot names
+            def _update_rename_dropdown():
+                """Update the rename dropdown choices."""
+                bot_names = get_bot_names()
+                return gr.Dropdown(choices=bot_names)
             
             def _load_bot_for_edit(bot_name: str):
                 """Load bot settings into edit fields."""
@@ -898,6 +1091,18 @@ with gr.Blocks(title="Home Control Center") as demo:
                     return f"✅ Bot '{name}' deleted!", *list(_refresh_bot_list())
                 return f"❌ Bot '{name}' not found.", *list(_refresh_bot_list())
             
+            def _rename_existing_bot(old_name: str, new_name: str):
+                """Rename a bot."""
+                if not old_name or not old_name.strip():
+                    return "❌ Select a bot to rename.", *list(_refresh_bot_list())
+                if not new_name or not new_name.strip():
+                    return "❌ Enter a new name.", *list(_refresh_bot_list())
+                if rename_bot(old_name.strip(), new_name.strip()):
+                    global BOT_PROFILES
+                    BOT_PROFILES = _load_bot_profiles()
+                    return f"✅ Bot renamed from '{old_name}' to '{new_name}'!", *list(_refresh_bot_list())
+                return f"❌ Failed to rename bot. Name may already exist.", *list(_refresh_bot_list())
+            
             # Event handlers
             refresh_bots_btn.click(_refresh_bot_list, outputs=[bot_list_display, edit_bot_dropdown])
             
@@ -922,6 +1127,12 @@ with gr.Blocks(title="Home Control Center") as demo:
             delete_bot_btn.click(
                 _delete_existing_bot,
                 inputs=[edit_bot_dropdown],
+                outputs=[bot_mgmt_status, bot_list_display, edit_bot_dropdown],
+            )
+            
+            rename_bot_btn.click(
+                _rename_existing_bot,
+                inputs=[rename_bot_dropdown, new_bot_name_input],
                 outputs=[bot_mgmt_status, bot_list_display, edit_bot_dropdown],
             )
             
@@ -1163,9 +1374,9 @@ with gr.Blocks(title="Home Control Center") as demo:
                 refresh_btn = gr.Button("Refresh Status")
 
             with gr.Accordion("Logs (latest 50 lines)", open=False):
-                brain_log = gr.Textbox(label="Brain Log", lines=10, interactive=False)
-                senses_log = gr.Textbox(label="Senses Log", lines=10, interactive=False)
-                bot_log = gr.Textbox(label="Bot Log", lines=10, interactive=False)
+                brain_log = gr.Textbox(label="Brain Log", value="", lines=20, max_lines=20, interactive=False, autoscroll=True)
+                senses_log = gr.Textbox(label="Senses Log", value="", lines=20, max_lines=20, interactive=False, autoscroll=True)
+                bot_log = gr.Textbox(label="Bot Log", value="", lines=20, max_lines=20, interactive=False, autoscroll=True)
 
         with gr.TabItem("Home Mode Chat"):
             profile = gr.Dropdown(label="Bot Profile", choices=list(BOT_PROFILES.keys()), value=ACTIVE_BOT_NAME)
@@ -1320,4 +1531,4 @@ with gr.Blocks(title="Home Control Center") as demo:
     ).then(lambda c: c, inputs=[chat], outputs=[state])
 
 
-demo.launch(server_name="127.0.0.1", server_port=7860)
+demo.launch(server_name="127.0.0.1", server_port=7862)

@@ -222,11 +222,24 @@ Access at: http://127.0.0.1:7861
 
 | File | Purpose |
 |------|---------|
-| `.env` | API keys, provider settings, tokens |
-| `bots_config.json` | Multi-bot configuration (name, token, user_id, voice, mode) |
-| `voice_config.json` | Default voice settings |
+| `.env` | API keys, provider settings, tokens (not committed - see below) |
+| `bots_config.json` | Multi-bot configuration (name, token, user_id, voice, mode) - not committed |
+| `voice_config` | Default voice settings - not committed |
 | `soul.md` | Core personality definition |
 | `persona.md` | Persona mode definitions |
+
+> 🔒 **Privacy Note:** Your personal configuration files (`.env`, `bots_config.json`, `voice_config`) are protected by `.gitignore` and won't be uploaded to GitHub. Use the example files (`bots_config.json.example`, `.env.example`) as templates.
+
+## 🔧 Telegram Commands
+
+| Command | Description |
+|---------|-------------|
+| `/start` | Start the bot and get the mode menu |
+| `/reset` | Soft refresh settings/profile |
+| `/new` | Clear short-term chat memory |
+| `/voice` | Open voice mode controls |
+| `/resetnames` | Reset bot and user names (start fresh) |
+| `/location [city]` | Set your location for weather |
 
 ---
 

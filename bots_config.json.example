@@ -1,0 +1,9 @@
+{
+  "BotName": {
+    "token": "YOUR_TELEGRAM_BOT_TOKEN",
+    "user_id": "YOUR_TELEGRAM_USER_ID",
+    "voice_name": "Pebble",
+    "voice_mode": "Text Only",
+    "telegram_id": null
+  }
+}

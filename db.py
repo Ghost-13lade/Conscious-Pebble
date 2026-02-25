@@ -398,6 +398,11 @@ def update_user_location(user_id: str, location: str) -> None:
     upsert_user_profile(user_id=user_id, location=location)
 
 
+def clear_user_names(user_id: str) -> None:
+    """Clear bot_name and user_name so bot will ask for names again."""
+    upsert_user_profile(user_id=user_id, bot_name="", user_name="")
+
+
 if __name__ == "__main__":
     init_db()
     print(f"Database initialized at: {DB_PATH}")
