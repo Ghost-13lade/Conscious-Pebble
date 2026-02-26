@@ -35,6 +35,8 @@ from config import (
     OPENAI_BASE_URL,
     OPENAI_MODEL,
     TELEGRAM_BOT_TOKEN,
+    get_provider,
+    reload_env,
 )
 from db import (
     get_active_mode,
@@ -948,6 +950,15 @@ async def handle_audio_message(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def heartbeat_job() -> None:
+    # Reload environment to get latest settings from .env file
+    reload_env()
+    
+    # Skip brain check for cloud providers (Mistral, OpenAI, OpenRouter, etc.)
+    # Only check localhost for Local MLX
+    if get_provider() != "Local MLX":
+        # Cloud provider - no local brain server needed
+        return
+    
     healthy = False
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
